@@ -1,0 +1,56 @@
+Danh sách Use Case (UC) và các file cài đặt tương ứng trong hệ thống (Backend & Web):
+
+1. Verify OTP (Backend) - Lâm Gia Bảo
+- be/iam-service/Controller/AuthController.cs
+- be/iam-service/Service/Implement/AuthService.cs
+- be/iam-service/Repositories/Implement/AuthRepo.cs
+- be/iam-service/Service/Implement/OtpService.cs
+- be/iam-service/Models/Dto/VerifyOtpDto.cs
+
+2. Verify OTP (Web) - Lâm Gia Bảo
+- fe/src/pages/auth/Register.js
+- fe/src/pages/auth/ForgotPassword.js
+- fe/src/shared/contexts/AuthContext.js
+- fe/src/services/authService.js
+
+3. Verify OTP (Mobile) - Lâm Gia Bảo
+- Hiện không có source code Mobile trong thư mục (Chưa có trong folder code_doan_bao).
+
+4. Update Account Information (Backend) - Lâm Gia Bảo
+- be/iam-service/Controller/AccountController .cs
+- be/iam-service/Service/Implement/AccountService.cs
+- be/iam-service/Repositories/Implement/AccountRepo.cs
+
+5. Update Account Information (Web) - Lâm Gia Bảo
+- fe/src/features/users/pages/UserManagementPage.js
+- fe/src/features/users/components/UnifiedUserInfoModal.js
+- fe/src/services/userManagementService.js
+
+6. Update Account Information (Mobile) - Lâm Gia Bảo
+- Hiện không có source code Mobile trong thư mục (Chưa có trong folder code_doan_bao).
+
+7. Manage Employees (Backend) - Lâm Gia Bảo
+- be/iam-service/Controller/AccountController .cs
+- be/iam-service/Service/Implement/AccountService.cs
+- be/iam-service/Repositories/Implement/AccountRepo.cs
+
+8. Manage Employees (Web) - Lâm Gia Bảo
+- fe/src/features/users/pages/UserManagementPage.js
+- fe/src/features/users/components/UnifiedUserInfoModal.js
+- fe/src/services/userManagementService.js
+
+9. Manage Employees (Mobile) - Lâm Gia Bảo
+- Hiện không có source code Mobile trong thư mục (Chưa có trong folder code_doan_bao).
+
+10. Manage Test Packages (Backend) - Lâm Gia Bảo
+- be/Testorder-service/Controllers/TestPackageController.cs
+- be/Testorder-service/Services/Implement/TestPackageService.cs
+- be/Testorder-service/Repositories/Implement/TestPackageRepository.cs
+
+11. Manage Test Packages (Web) - Lâm Gia Bảo
+- fe/src/pages/public/Services.js
+- fe/src/services/testOrderService.js
+- fe/src/services/medicalService.js
+
+12. Manage Test Packages (Mobile) - Lâm Gia Bảo
+- Hiện không có source code Mobile trong thư mục (Chưa có trong folder code_doan_bao).

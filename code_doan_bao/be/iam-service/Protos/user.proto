@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option csharp_namespace = "GrpcAuth_Server";
+
+service UserService {
+  rpc GetUserById (GetUserRequest) returns (GetUserResponse);
+  rpc GetUserByEmail (GetUserByEmailRequest) returns (GetUserResponse);
+  rpc ValidateUserToken (ValidateTokenRequest) returns (ValidateTokenResponse);
+}
+
+message GetUserRequest { string userId = 1; }
+message GetUserByEmailRequest { string email = 1; }
+
+message GetUserResponse {
+  string userId = 1;
+  string userName = 2;
+  string email = 3;
+  int32 roleId = 4;
+  int32 status = 5;
+  string createdAt = 6; // ISO 8601 string
+}
+
+message ValidateTokenRequest { string token = 1; }
+message ValidateTokenResponse { bool valid = 1; string userId = 2; }

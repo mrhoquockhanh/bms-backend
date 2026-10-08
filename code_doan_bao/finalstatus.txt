@@ -1,0 +1,3 @@
+FE3000=DOWN GATEWAY7000=UP
+node_count=0
+

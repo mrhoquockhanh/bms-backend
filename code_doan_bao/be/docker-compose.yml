@@ -1,0 +1,244 @@
+services:
+
+  consul:
+    image: hashicorp/consul:1.17
+    container_name: consul
+    environment:
+      - 'CONSUL_BIND_INTERFACE=eth0'
+      - 'CONSUL_CLIENT_INTERFACE=eth0'
+      - 'CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt": true}'
+    command: "agent -server -bootstrap -client=0.0.0.0 -ui"
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8500/v1/status/leader" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - consul_data:/consul/data
+    networks:
+      - kafka_network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    ports:
+      - "2181:2181" # Cổng AMQP (MassTransit dùng để publish/consume)   
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper
+    networks:
+      - kafka_network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      zookeeper:
+        condition: service_started
+    ports:
+      - "9092:9092" # Cổng AMQP (MassTransit dùng để publish/consume)
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: [ "CMD-SHELL", "nc -z localhost 9092 || exit 1" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      - kafka_network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    restart: always
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8085:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+    networks:
+      - kafka_network
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - kafka_network
+
+  api-gateway:
+    image: ${DOCKER_REGISTRY-}apigateway
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    ports:
+      - "8000:8080"
+    depends_on:
+      - iam-service
+      - patient-service
+      - testorder-service
+    networks:
+      - kafka_network
+
+  iam-service:
+    image: ${DOCKER_REGISTRY-}iamservice
+    build:
+      context: .
+      dockerfile: iam-service/Dockerfile
+    depends_on:
+      kafka:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+    restart: on-failure
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:7020"
+      DOTNET_RUNNING_IN_CONTAINER: "true"
+      Kafka__Host: "kafka:9092"
+      Kafka__GroupId: "iam-service-email-consumer"
+      Kafka__Topics__UserCreated: "iam-service.user-created"
+      Kafka__Topics__EmailNotification: "iam-service.email-notification"
+      ConnectionStrings__DefaultConnection: "mongodb://mongodb:27017/UserManagementDB"
+      ConsulConfig__Address: "http://consul:8500"
+      ConsulConfig__ServiceName: "iam-service"
+      ConsulConfig__ServiceId: "iam-service-1"
+      ConsulConfig__ServiceHost: "iam-service"
+      ConsulConfig__ServicePort: "7020"
+      ConsulConfig__HealthCheckEndpoint: "/health"
+      Grpc__Port: "7021"
+    ports:
+      - "7020:7020" # REST API
+      - "7021:7021" # gRPC
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:7020/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - kafka_network
+
+  patient-service:
+    image: ${DOCKER_REGISTRY-}patientservice
+    build:
+      context: .
+      dockerfile: Patient-service/Dockerfile
+    depends_on:
+      kafka:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+      iam-service:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+    restart: on-failure
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:7263"
+      ASPNETCORE_HTTPS_PORTS: "" # Disable HTTPS ports in Docker
+      DOTNET_RUNNING_IN_CONTAINER: "true"
+      Kafka__Host: "kafka:9092"
+      Kafka__GroupId: "patient-service-consumer"
+      Kafka__Topics__UserCreated: "iam-service.user-created"
+      ConnectionStrings__DefaultConnection: "mongodb://mongodb:27017/PatientService"
+      ConsulConfig__Address: "http://consul:8500"
+      ConsulConfig__ServiceName: "patient-service"
+      ConsulConfig__ServiceId: "patient-service-1"
+      ConsulConfig__ServiceHost: "patient-service"
+      ConsulConfig__ServicePort: "7263"
+      ConsulConfig__HealthCheckEndpoint: "/health"
+      Grpc__Port: "7264"
+      GrpcSettings__IamServiceUrl: "http://iam-service:7021"
+    ports:
+      - "7263:7263" # REST API
+      - "7264:7264" # gRPC
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:7263/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - kafka_network
+
+  testorder-service:
+    image: ${DOCKER_REGISTRY-}testorderservice
+    build:
+      context: .
+      dockerfile: Testorder-service/Dockerfile
+    depends_on:
+      kafka:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+      iam-service:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+    restart: on-failure
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:7105"
+      ASPNETCORE_HTTPS_PORTS: "" # Disable HTTPS ports in Docker
+      DOTNET_RUNNING_IN_CONTAINER: "true"
+      Kafka__Host: "kafka:9092"
+      Kafka__GroupId: "testorder-service-consumer"
+      Kafka__Topics__AppointmentCreated: "testorder-service.appointment-created"
+      Kafka__Topics__TestResultCreated: "testorder-service.testresult-created"
+      Kafka__Topics__UserCreated: "iam-service.user-created"
+      Kafka__Topics__EmailNotification: "iam-service.email-notification"
+      ConnectionStrings__DefaultConnection: "mongodb://mongodb:27017/TestOrderManagementDB"
+      ConsulConfig__Address: "http://consul:8500"
+      ConsulConfig__ServiceName: "testorder-service"
+      ConsulConfig__ServiceId: "testorder-service-1"
+      ConsulConfig__ServiceHost: "testorder-service"
+      ConsulConfig__ServicePort: "7105"
+      ConsulConfig__HealthCheckEndpoint: "/health"
+      Grpc__Port: "7106"
+      GrpcSettings__IamServiceUrl: "http://iam-service:7021"
+    ports:
+      - "7105:7105" # REST API
+      - "7106:7106" # gRPC
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:7105/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - kafka_network
+
+volumes:
+  kafka_data:
+  zookeeper_data:
+  consul_data:
+  mongodb_data:
+networks:
+  kafka_network:
+    driver: bridge

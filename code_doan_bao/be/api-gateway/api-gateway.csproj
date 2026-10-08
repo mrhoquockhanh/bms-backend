@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>api_gateway</RootNamespace>
+    <UserSecretsId>5287cb96-2dcb-42bb-a023-023675ae9026</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\VNPAY.NET\Enums\BankCode.cs" Link="BankCode.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CacheManager.Serialization.Json" Version="2.0.0" />
+    <PackageReference Include="CacheManager.StackExchange.Redis" Version="2.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+    <PackageReference Include="Ocelot" Version="24.0.1" />
+    <PackageReference Include="Ocelot.Cache.CacheManager" Version="24.0.0" />
+    <PackageReference Include="Ocelot.Provider.Consul" Version="24.0.0" />
+    <PackageReference Include="Ocelot.Provider.Kubernetes" Version="24.0.1" />
+    <PackageReference Include="Ocelot.Provider.Polly" Version="24.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+</Project>

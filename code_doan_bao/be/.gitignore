@@ -1,0 +1,73 @@
+# ============================================
+# Visual Studio / .NET Backend .gitignore
+# ============================================
+
+# Visual Studio folders
+.vs/
+.vscode/
+
+# Build results
+bin/
+obj/
+TestResults/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Temporary / cache files
+*.tmp
+*.log
+*.bak
+*.cache
+*.db-shm
+*.db-wal
+*.db
+*.sqlite
+*.sqlite3
+
+# NuGet packages
+*.nupkg
+packages/
+.nuget/
+project.lock.json
+
+# OS generated files
+*.DS_Store
+Thumbs.db
+
+# ============================================
+# Configuration files (environment-specific)
+# ============================================
+
+
+# Keep only the base appsettings.json if you want a template in repo
+# (uncomment if you DO want to include base one)
+# !appsettings.json
+
+# Environment files
+.env
+.env.*
+.local.settings.json
+
+# ============================================
+# Miscellaneous
+# ============================================
+
+# Rider / JetBrains
+.idea/
+
+# Logs & coverage
+logs/
+coverage/
+*.coverage
+*.coveragexml
+
+# Backup / temporary / generated files
+_Backup*/
+_ReSharper*/
+
+# Local config files
+.env

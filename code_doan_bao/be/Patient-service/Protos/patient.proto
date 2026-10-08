@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option csharp_namespace = "GrpcPatient_Server";
+
+service PatientService {
+  rpc GetPatientById (GetPatientRequest) returns (GetPatientResponse);
+}
+
+message GetPatientRequest {
+  string patientId = 1;
+}
+
+message GetPatientResponse {
+  string patientId = 1;
+  string fullname = 2;
+  string dob = 3; // ISO 8601 date string
+  string gender = 4;
+  string phone = 5;
+  string email = 6;
+  string address = 7;
+  string bloodType = 8;
+  string identityNumber = 9;
+  string createdAt = 10; // ISO 8601 string
+  string updatedAt = 11; // ISO 8601 string
+  string medicalHistory = 12;
+  string createdBy = 13;
+}
+

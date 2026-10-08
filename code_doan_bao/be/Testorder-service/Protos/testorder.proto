@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option csharp_namespace = "GrpcTestOrder_Server";
+
+service TestOrderService {
+  rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
+}
+
+message CreateOrderRequest {
+  string testPackageId = 1;
+  string doctorShiftId = 2;
+  string status = 3;
+  string createdBy = 4;
+  string labAssignmentId = 5;
+}
+
+message CreateOrderResponse {
+  string orderId = 1;
+  string testPackageId = 2;
+  string doctorShiftId = 3;
+  string status = 4;
+  string createdAt = 5; // ISO 8601 string
+  bool success = 6;
+  string message = 7;
+}
+
